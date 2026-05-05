@@ -15,11 +15,11 @@ import (
 // canteenSlugs maps canteen slugs (used in URLs and as keys) to themselves.
 // The slug is the identifier used by stw-edu.de.
 var canteenSlugs = map[string]string{
-	"mensa-campus-duisburg":  "mensa-campus-duisburg",
-	"mensa-campus-essen":     "mensa-campus-essen",
-	"mensa-campus-bottrop":   "mensa-campus-bottrop",
-	"mensa-campus-folkwang":  "mensa-campus-folkwang",
-	"mensa-campus-muelheim":  "mensa-campus-muelheim",
+	"mensa-campus-duisburg":    "mensa-campus-duisburg",
+	"mensa-campus-essen":       "mensa-campus-essen",
+	"mensa-campus-bottrop":     "mensa-campus-bottrop",
+	"mensa-campus-folkwang":    "mensa-campus-folkwang",
+	"mensa-campus-muelheim":    "mensa-campus-muelheim",
 	"bistro-campus-zollverein": "bistro-campus-zollverein",
 }
 
