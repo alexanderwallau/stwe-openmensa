@@ -16,49 +16,6 @@ import (
 	"time"
 )
 
-// ─── Cache
-
-type cacheEntry struct {
-	data    []byte
-	expires time.Time
-}
-
-type cache struct {
-	mu    sync.RWMutex
-	items map[string]cacheEntry
-}
-
-func newCache() *cache {
-	return &cache{items: make(map[string]cacheEntry)}
-}
-
-func (c *cache) get(key string) ([]byte, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	e, ok := c.items[key]
-	if !ok || time.Now().After(e.expires) {
-		return nil, false
-	}
-	return e.data, true
-}
-
-func (c *cache) set(key string, data []byte, ttl time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.items[key] = cacheEntry{data: data, expires: time.Now().Add(ttl)}
-}
-
-func (c *cache) evictExpired() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	now := time.Now()
-	for k, e := range c.items {
-		if now.After(e.expires) {
-			delete(c.items, k)
-		}
-	}
-}
-
 // cacheTTL is the maximum time a response is cached (past dates never change).
 const cacheTTL = 365 * 24 * time.Hour
 
@@ -472,6 +429,7 @@ func main() {
 	port := flag.Int("port", 8080, "TCP port to listen on")
 	listen := flag.String("listen", "127.0.0.1", "address to listen on")
 	baseURL := flag.String("base-url", "", "base URL of this server (e.g. https://example.com); auto-detected from request host if empty")
+	cacheDir := flag.String("cache-dir", "", "directory for persistent cached menu responses; disabled when empty")
 	refreshStr := flag.String("refresh", "07:00,11:00,14:00,17:00",
 		"comma-separated HH:MM times to refresh today's menu (local time)")
 	flag.Parse()
@@ -481,7 +439,16 @@ func main() {
 		log.Fatal("no valid refresh times parsed from --refresh flag")
 	}
 
-	srv := &server{cache: newCache(), baseURL: strings.TrimRight(*baseURL, "/")}
+	menuCache, err := newCache(*cacheDir)
+	if err != nil {
+		log.Fatalf("initialize cache: %v", err)
+	}
+	if *cacheDir == "" {
+		log.Printf("persistent cache disabled; use --cache-dir to retain responses across restarts")
+	} else {
+		log.Printf("persistent cache: %s", *cacheDir)
+	}
+	srv := &server{cache: menuCache, baseURL: strings.TrimRight(*baseURL, "/")}
 
 	go srv.runScheduler(refreshTimes)
 

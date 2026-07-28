@@ -4,8 +4,13 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    volumes:
+      - stwe-openmensa-cache:/var/lib/stwe-openmensa
     command:
       - -listen=0.0.0.0
       - -port=8080
       # Comma-separated HH:MM times (local time) to refresh today's menu
       # - -refresh=07:00,11:00,14:00,17:00
+
+volumes:
+  stwe-openmensa-cache:

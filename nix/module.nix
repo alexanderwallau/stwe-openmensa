@@ -35,6 +35,12 @@ in
       '';
     };
 
+    cacheDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/stwe-openmensa";
+      description = "Directory where cached menu responses persist across service restarts and reboots.";
+    };
+
     user = lib.mkOption {
       type = lib.types.str;
       default = "stwe-openmensa";
@@ -64,18 +70,21 @@ in
       after = [ "network.target" ];
 
       serviceConfig = {
-        ExecStart = lib.escapeShellArgs ([
+        ExecStart = lib.escapeShellArgs [
           "${cfg.package}/bin/stwe-openmensa"
           "--port"    (toString cfg.port)
           "--listen"  cfg.listenAddress
           "--refresh" (lib.concatStringsSep "," cfg.refreshTimes)
-        ]);
+          "--cache-dir" cfg.cacheDir
+        ];
 
         User  = cfg.user;
         Group = cfg.group;
 
         Restart    = "on-failure";
         RestartSec = "10s";
+        StateDirectory = lib.optional (cfg.cacheDir == "/var/lib/stwe-openmensa") "stwe-openmensa";
+        ReadWritePaths = lib.optional (cfg.cacheDir != "/var/lib/stwe-openmensa") cfg.cacheDir;
 
         # Hardening
         NoNewPrivileges      = true;
